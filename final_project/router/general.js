@@ -1,9 +1,9 @@
 const express = require('express');
+const axios = require('axios');
 
 let books = require("./booksdb.js");
 
 let isValid = require("./auth_users.js").isValid;
-
 let users = require("./auth_users.js").users;
 
 const public_users = express.Router();
@@ -43,10 +43,30 @@ public_users.post("/register", (req, res) => {
 
 
 // ==========================================
-// TASK 2 - Get all books
+// TASK 2 - Get all books using Axios
 // ==========================================
 
-public_users.get('/', function (req, res) {
+public_users.get('/', async function (req, res) {
+
+  try {
+
+    const response = await axios.get('http://localhost:5001/internal/books');
+
+    return res.status(200).json(response.data);
+
+  } catch (error) {
+
+    return res.status(500).json({
+      message: "Unable to retrieve books"
+    });
+
+  }
+
+});
+
+
+// Internal route used by Axios
+public_users.get('/internal/books', function (req, res) {
 
   return res.status(200).json(books);
 
@@ -54,17 +74,39 @@ public_users.get('/', function (req, res) {
 
 
 // ==========================================
-// TASK 3 - Get book by ISBN
+// TASK 3 - Get book by ISBN using Axios
 // ==========================================
 
-public_users.get('/isbn/:isbn', function (req, res) {
+public_users.get('/isbn/:isbn', async function (req, res) {
+
+  const isbn = req.params.isbn;
+
+  try {
+
+    const response = await axios.get(
+      `http://localhost:5001/internal/books/${isbn}`
+    );
+
+    return res.status(200).json(response.data);
+
+  } catch (error) {
+
+    return res.status(404).json({
+      message: "Book not found"
+    });
+
+  }
+
+});
+
+
+// Internal ISBN route
+public_users.get('/internal/books/:isbn', function (req, res) {
 
   const isbn = req.params.isbn;
 
   if (books[isbn]) {
-
     return res.status(200).json(books[isbn]);
-
   }
 
   return res.status(404).json({
@@ -75,10 +117,34 @@ public_users.get('/isbn/:isbn', function (req, res) {
 
 
 // ==========================================
-// TASK 4 - Get books by Author
+// TASK 4 - Get books by Author using Axios
 // ==========================================
 
-public_users.get('/author/:author', function (req, res) {
+public_users.get('/author/:author', async function (req, res) {
+
+  const author = req.params.author;
+
+  try {
+
+    const response = await axios.get(
+      `http://localhost:5001/internal/books/author/${encodeURIComponent(author)}`
+    );
+
+    return res.status(200).json(response.data);
+
+  } catch (error) {
+
+    return res.status(404).json({
+      message: "Book not found"
+    });
+
+  }
+
+});
+
+
+// Internal author route
+public_users.get('/internal/books/author/:author', function (req, res) {
 
   const author = req.params.author;
 
@@ -87,17 +153,13 @@ public_users.get('/author/:author', function (req, res) {
   for (let key in books) {
 
     if (books[key].author.toLowerCase() === author.toLowerCase()) {
-
       result[key] = books[key];
-
     }
 
   }
 
   if (Object.keys(result).length > 0) {
-
     return res.status(200).json(result);
-
   }
 
   return res.status(404).json({
@@ -108,10 +170,34 @@ public_users.get('/author/:author', function (req, res) {
 
 
 // ==========================================
-// TASK 5 - Get books by Title
+// TASK 5 - Get books by Title using Axios
 // ==========================================
 
-public_users.get('/title/:title', function (req, res) {
+public_users.get('/title/:title', async function (req, res) {
+
+  const title = req.params.title;
+
+  try {
+
+    const response = await axios.get(
+      `http://localhost:5001/internal/books/title/${encodeURIComponent(title)}`
+    );
+
+    return res.status(200).json(response.data);
+
+  } catch (error) {
+
+    return res.status(404).json({
+      message: "Book not found"
+    });
+
+  }
+
+});
+
+
+// Internal title route
+public_users.get('/internal/books/title/:title', function (req, res) {
 
   const title = req.params.title;
 
@@ -120,17 +206,13 @@ public_users.get('/title/:title', function (req, res) {
   for (let key in books) {
 
     if (books[key].title.toLowerCase() === title.toLowerCase()) {
-
       result[key] = books[key];
-
     }
 
   }
 
   if (Object.keys(result).length > 0) {
-
     return res.status(200).json(result);
-
   }
 
   return res.status(404).json({
